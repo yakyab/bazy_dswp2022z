@@ -1,0 +1,93 @@
+CREATE OR REPLACE PROCEDURE LAB4ZAD9A (
+p_job_id IN jobs.job_id%TYPE,
+p_job_title IN jobs.job_title%TYPE
+)
+AS
+BEGIN
+INSERT INTO jobs(job_id, job_title)
+VALUES (p_job_id, p_job_title);
+COMMIT;
+EXCEPTION
+WHEN OTHERS THEN
+RAISE_APPLICATION_ERROR(-20001, 'Error while adding job: ' || SQLERRM);
+END LAB4ZAD9A;
+
+BEGIN
+lab4zad9a(1, 'Manager');
+END;
+
+CREATE OR REPLACE PROCEDURE LAB4ZAD9B(
+p_id IN jobs.job_id%TYPE,
+p_title IN jobs.job_title%TYPE
+)
+AS
+BEGIN
+UPDATE jobs
+SET job_title = p_title
+WHERE job_id = p_id;
+IF SQL%ROWCOUNT = 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'No Jobs updated');
+END IF;
+END;
+
+BEGIN
+lab4zad9b(1, 'SuperManager');
+DBMS_OUTPUT.PUT_LINE('Job title updated successfully.');
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+
+CREATE OR REPLACE PROCEDURE lab4zad9c(p_job_id IN jobs.job_id%TYPE)
+AS
+BEGIN
+DELETE FROM jobs
+WHERE job_id = p_job_id;
+IF SQL%ROWCOUNT = 0 THEN
+RAISE_APPLICATION_ERROR(-20001, 'No Jobs deleted');
+END IF;
+END;
+
+BEGIN
+lab4zad9c('1');
+COMMIT;
+END;
+
+CREATE OR REPLACE PROCEDURE lab4zad9d(p_employee_id IN employees.employee_id%TYPE,
+p_salary OUT employees.salary%TYPE,
+p_last_name OUT employees.last_name%TYPE)
+AS
+BEGIN
+SELECT salary, last_name INTO p_salary, p_last_name
+FROM employees
+WHERE employee_id = p_employee_id;
+END;
+
+BEGIN
+lab4zad9d(100, v_salary, v_last_name);
+DBMS_OUTPUT.PUT_LINE('Zarobki: ' || v_salary || ' Nazwisko: ' || v_last_name);
+END;
+
+CREATE OR REPLACE PROCEDURE lab4zad9e (
+P_EMPLOYEE_ID NUMBER,
+P_FIRST_NAME VARCHAR2,
+P_LAST_NAME VARCHAR2,
+P_EMAIL VARCHAR2 := NULL,
+P_PHONE_NUMBER VARCHAR2 := NULL,
+P_HIRE_DATE DATE := SYSDATE,
+P_JOB_ID VARCHAR2 := 'ST_CLERK',
+P_SALARY NUMBER := 3000,
+P_COMMISSION_PCT NUMBER := NULL,
+P_MANAGER_ID NUMBER,
+P_DEPARTMENT_ID NUMBER
+)
+AS
+BEGIN
+IF P_SALARY > 20000 THEN
+  RAISE_APPLICATION_ERROR(-20001, 'The salary of the new employee cannot be higher than 20000.');
+END IF;
+INSERT INTO EMPLOYEES(EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+VALUES (P_EMPLOYEE_ID, P_FIRST_NAME, P_LAST_NAME, P_EMAIL, P_PHONE_NUMBER, P_HIRE_DATE, P_JOB_ID, P_SALARY, P_COMMISSION_PCT, P_MANAGER_ID, P_DEPARTMENT_ID);
+END;
+
+Nie da się zrobić id poprzez sekwencję, ponieważ występuje błąd.
