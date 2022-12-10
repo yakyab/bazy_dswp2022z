@@ -1,0 +1,114 @@
+CREATE OR REPLACE FUNCTION lab5fun1 (p_id IN VARCHAR)
+RETURN VARCHAR2
+IS
+v_job_name VARCHAR2(100);
+BEGIN
+SELECT job_title
+INTO v_job_name
+FROM jobs
+WHERE job_id = p_id;
+
+RETURN v_job_name;
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20001, 'Praca o podanym ID nie istnieje.');
+END;
+
+declare
+v_job_name varchar2(50);
+begin
+v_job_name := lab5fun1('SA_REP');
+dbms_output.put_line('Nazwa pracy: ' || v_job_name);
+end;
+
+CREATE OR REPLACE FUNCTION lab5fun2(
+p_employee_id IN NUMBER,
+p_commission_pct IN NUMBER
+) RETURN NUMBER
+AS
+v_annual_earnings NUMBER;
+v_monthly_salary NUMBER;
+v_commission NUMBER;
+BEGIN
+SELECT salary INTO v_monthly_salary
+FROM employees
+WHERE employee_id = p_employee_id;
+v_commission := v_monthly_salary * p_commission_pct;
+v_annual_earnings := v_monthly_salary * 12 + v_commission;
+
+RETURN v_annual_earnings;
+END;
+
+SELECT lab5fun2(101, 0.10) FROM dual;
+
+comission_pct nie zawsze ma wartość, więc jest ona podawana przez użytkownika
+
+FUNCTION lab5fun3 (p_phone_number VARCHAR2)
+RETURN VARCHAR2 AS
+BEGIN
+RETURN SUBSTR(p_phone_number, 1, 3);
+END;
+
+SELECT lab5fun3('+48123456789') FROM dual;
+
+CREATE OR REPLACE FUNCTION lab5fun4(input_string IN VARCHAR2)
+RETURN VARCHAR2
+IS
+BEGIN
+RETURN UPPER(SUBSTR(input_string, 1, 1))
+|| LOWER(SUBSTR(input_string, 2, LENGTH(input_string)-2))
+|| UPPER(SUBSTR(input_string, -1, 1));
+END;
+
+SELECT lab5fun4('TestString') FROM dual;
+
+CREATE OR REPLACE FUNCTION lab5fun5 (p_pesel IN VARCHAR2)
+RETURN DATE
+AS
+v_year VARCHAR2(4);
+v_month VARCHAR2(2);
+v_day VARCHAR2(2);
+BEGIN
+v_year := SUBSTR(p_pesel, 1, 2);
+v_month := SUBSTR(p_pesel, 3, 2);
+v_day := SUBSTR(p_pesel, 5, 2);
+
+IF v_month > 12 THEN
+v_year := '19' || v_year;
+v_month := TO_CHAR(TO_NUMBER(v_month) - 20);
+ELSE
+v_year := '20' || v_year;
+END IF;
+
+RETURN TO_DATE(v_year || '-' || v_month || '-' || v_day, 'YYYY-MM-DD');
+END;
+
+SELECT lab5fun5('88061309820') FROM dual;
+
+CREATE OR REPLACE FUNCTION lab5fun6(p_country VARCHAR2)
+RETURN VARCHAR AS
+v_employee_count NUMBER;
+v_department_count NUMBER;
+
+BEGIN
+SELECT COUNT(*) INTO v_employee_count
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id
+INNER JOIN locations l ON d.location_id = l.location_id
+WHERE l.country_id = p_country;
+
+SELECT COUNT(*) INTO v_department_count
+FROM departments d
+INNER JOIN locations l ON d.location_id = l.location_id
+WHERE l.country_id = p_country;
+
+RETURN v_employee_count || ' pracowników i ' || v_department_count || ' departamentów w kraju ' || p_country;
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20001, 'No country found with name: ' || p_country);
+END;
+
+BEGIN
+DBMS_OUTPUT.PUT_LINE(lab5fun6('US'));
+END;
