@@ -1,0 +1,297 @@
+create or replace PACKAGE PACKAGE1 AS
+
+PROCEDURE LAB4ZAD9A (
+p_job_id IN jobs.job_id%TYPE,
+p_job_title IN jobs.job_title%TYPE
+);
+
+PROCEDURE LAB4ZAD9B(
+p_id IN jobs.job_id%TYPE,
+p_title IN jobs.job_title%TYPE
+);
+
+PROCEDURE lab4zad9c(p_job_id IN jobs.job_id%TYPE);
+
+PROCEDURE lab4zad9d(p_employee_id IN employees.employee_id%TYPE,
+p_salary OUT employees.salary%TYPE,
+p_last_name OUT employees.last_name%TYPE);
+
+PROCEDURE lab4zad9e (
+P_EMPLOYEE_ID NUMBER,
+P_FIRST_NAME VARCHAR2, 
+P_LAST_NAME VARCHAR2,
+P_EMAIL VARCHAR2 := NULL,
+P_PHONE_NUMBER VARCHAR2 := NULL,
+P_HIRE_DATE DATE := SYSDATE,
+P_JOB_ID VARCHAR2 := 'ST_CLERK',
+P_SALARY NUMBER := 3000,
+P_COMMISSION_PCT NUMBER := NULL,
+P_MANAGER_ID NUMBER,
+P_DEPARTMENT_ID NUMBER
+);
+
+FUNCTION lab5fun1 (p_id IN VARCHAR) RETURN VARCHAR2;
+
+FUNCTION lab5fun2(
+p_employee_id IN NUMBER,
+p_commission_pct IN NUMBER
+) RETURN NUMBER;
+
+FUNCTION lab5fun3(p_phone_number VARCHAR2) RETURN VARCHAR2;
+
+FUNCTION lab5fun4(input_string IN VARCHAR2) RETURN VARCHAR2;
+
+FUNCTION lab5fun5 (p_pesel IN VARCHAR2) RETURN DATE;
+
+FUNCTION lab5fun6(p_country VARCHAR2) RETURN VARCHAR;
+
+END PACKAGE1;
+
+create or replace PACKAGE BODY PACKAGE1 AS
+
+PROCEDURE LAB4ZAD9A (
+p_job_id IN jobs.job_id%TYPE,
+p_job_title IN jobs.job_title%TYPE
+)
+AS
+BEGIN
+
+INSERT INTO jobs(job_id, job_title)
+VALUES (p_job_id, p_job_title);
+COMMIT;
+
+EXCEPTION
+WHEN OTHERS THEN
+RAISE_APPLICATION_ERROR(-20001, 'Error while adding job: ' || SQLERRM);
+
+END LAB4ZAD9A;
+
+PROCEDURE LAB4ZAD9B(
+p_id IN jobs.job_id%TYPE,
+p_title IN jobs.job_title%TYPE
+)
+AS
+BEGIN
+UPDATE jobs
+SET job_title = p_title
+WHERE job_id = p_id;
+IF SQL%ROWCOUNT = 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'No Jobs updated');
+END IF;
+END lab4zad9b;
+
+PROCEDURE lab4zad9c(p_job_id IN jobs.job_id%TYPE)
+AS
+BEGIN
+DELETE FROM jobs
+WHERE job_id = p_job_id;
+
+IF SQL%ROWCOUNT = 0 THEN
+RAISE_APPLICATION_ERROR(-20001, 'No Jobs deleted');
+END IF;
+END lab4zad9c;
+
+PROCEDURE lab4zad9d(p_employee_id IN employees.employee_id%TYPE,
+p_salary OUT employees.salary%TYPE,
+p_last_name OUT employees.last_name%TYPE)
+AS
+BEGIN
+SELECT salary, last_name INTO p_salary, p_last_name
+FROM employees
+WHERE employee_id = p_employee_id;
+END lab4zad9d;
+
+PROCEDURE lab4zad9e (
+P_EMPLOYEE_ID NUMBER,
+P_FIRST_NAME VARCHAR2,
+P_LAST_NAME VARCHAR2,
+P_EMAIL VARCHAR2 := NULL,
+P_PHONE_NUMBER VARCHAR2 := NULL,
+P_HIRE_DATE DATE := SYSDATE,
+P_JOB_ID VARCHAR2 := 'ST_CLERK',
+P_SALARY NUMBER := 3000,
+P_COMMISSION_PCT NUMBER := NULL,
+P_MANAGER_ID NUMBER,
+P_DEPARTMENT_ID NUMBER
+)
+AS
+BEGIN
+IF P_SALARY > 20000 THEN
+  RAISE_APPLICATION_ERROR(-20001, 'The salary of the new employee cannot be higher than 20000.');
+END IF;
+INSERT INTO EMPLOYEES(EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+VALUES (P_EMPLOYEE_ID, P_FIRST_NAME, P_LAST_NAME, P_EMAIL, P_PHONE_NUMBER, P_HIRE_DATE, P_JOB_ID, P_SALARY, P_COMMISSION_PCT, P_MANAGER_ID, P_DEPARTMENT_ID);
+END lab4zad9e;
+
+FUNCTION lab5fun1 (p_id IN VARCHAR)
+RETURN VARCHAR2
+IS
+v_job_name VARCHAR2(100);
+BEGIN
+SELECT job_title
+INTO v_job_name
+FROM jobs
+WHERE job_id = p_id;
+
+RETURN v_job_name;
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20001, 'Praca o podanym ID nie istnieje.');
+END lab5fun1;
+
+FUNCTION lab5fun2(
+p_employee_id IN NUMBER,
+p_commission_pct IN NUMBER
+) RETURN NUMBER
+AS
+v_annual_earnings NUMBER;
+v_monthly_salary NUMBER;
+v_commission NUMBER;
+BEGIN
+SELECT salary INTO v_monthly_salary
+FROM employees
+WHERE employee_id = p_employee_id;
+v_commission := v_monthly_salary * p_commission_pct;
+v_annual_earnings := v_monthly_salary * 12 + v_commission;
+
+RETURN v_annual_earnings;
+END lab5fun2;
+
+FUNCTION lab5fun3 (p_phone_number VARCHAR2)
+RETURN VARCHAR2 AS
+BEGIN
+RETURN SUBSTR(p_phone_number, 1, 3);
+END lab5fun3;	
+
+FUNCTION lab5fun4(input_string IN VARCHAR2)
+RETURN VARCHAR2
+IS
+BEGIN
+RETURN UPPER(SUBSTR(input_string, 1, 1))
+|| LOWER(SUBSTR(input_string, 2, LENGTH(input_string)-2))
+|| UPPER(SUBSTR(input_string, -1, 1));
+END lab5fun4;
+
+FUNCTION lab5fun5 (p_pesel IN VARCHAR2)
+RETURN DATE
+AS
+v_year VARCHAR2(4);
+v_month VARCHAR2(2);
+v_day VARCHAR2(2);
+BEGIN
+v_year := SUBSTR(p_pesel, 1, 2);
+v_month := SUBSTR(p_pesel, 3, 2);
+v_day := SUBSTR(p_pesel, 5, 2);
+
+IF v_month > 12 THEN
+v_year := '19' || v_year;
+v_month := TO_CHAR(TO_NUMBER(v_month) - 20);
+ELSE
+v_year := '20' || v_year;
+END IF;
+
+RETURN TO_DATE(v_year || '-' || v_month || '-' || v_day, 'YYYY-MM-DD');
+END lab5fun5;
+
+FUNCTION lab5fun6(p_country VARCHAR2)
+RETURN VARCHAR AS
+v_employee_count NUMBER;
+v_department_count NUMBER;
+
+BEGIN
+SELECT COUNT(*) INTO v_employee_count
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id
+INNER JOIN locations l ON d.location_id = l.location_id
+WHERE l.country_id = p_country;
+
+SELECT COUNT(*) INTO v_department_count
+FROM departments d
+INNER JOIN locations l ON d.location_id = l.location_id
+WHERE l.country_id = p_country;
+
+RETURN v_employee_count || ' pracowników i ' || v_department_count || ' departamentów w kraju ' || p_country;
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20001, 'No country found with name: ' || p_country);
+END lab5fun6;
+
+END PACKAGE1;
+
+---------------------------------------------------------------------------------------------------
+
+create or replace package package2 as 
+
+PROCEDURE add_region(
+region_id IN NUMBER,
+region_name IN VARCHAR2
+);
+
+PROCEDURE update_region(
+p_region_id IN NUMBER,
+p_region_name IN VARCHAR2
+);
+
+PROCEDURE delete_region(
+p_region_id IN NUMBER
+); 
+
+FUNCTION get_region_name(p_region_id IN NUMBER) RETURN VARCHAR2;
+
+FUNCTION get_region_names RETURN VARCHAR2;
+ 
+end package2;
+
+create or replace
+package body package2 as
+
+PROCEDURE add_region(
+region_id IN NUMBER,
+region_name IN VARCHAR2
+) IS
+BEGIN
+INSERT INTO regions (region_id, region_name) VALUES (region_id, region_name);
+END add_region;
+
+PROCEDURE update_region(
+p_region_id IN NUMBER,
+p_region_name IN VARCHAR2
+) IS
+BEGIN
+UPDATE regions 
+SET region_name = p_region_name 
+WHERE region_id = p_region_id;
+END update_region;
+
+PROCEDURE delete_region(
+p_region_id IN NUMBER
+) IS
+BEGIN
+DELETE FROM regions
+WHERE region_id = p_region_id;
+END delete_region;
+
+FUNCTION get_region_name(p_region_id IN NUMBER) RETURN VARCHAR2
+AS
+v_region_name VARCHAR2(100);
+BEGIN
+SELECT region_name INTO v_region_name
+FROM REGIONS
+WHERE region_id = p_region_id;
+RETURN v_region_name;
+END get_region_name;  
+
+FUNCTION get_region_names
+RETURN VARCHAR2
+AS
+regions VARCHAR2(4000);
+BEGIN
+SELECT LISTAGG(region_name, ',') WITHIN GROUP (ORDER BY region_name)
+INTO regions
+FROM REGIONS;
+
+RETURN regions;
+END get_region_names;
+
+end package2;
